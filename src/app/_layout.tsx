@@ -31,9 +31,10 @@ function useAuthGate() {
 
   useEffect(() => {
     if (userId === undefined) return; // 아직 확인 중
-    const onLogin = segments[0] === 'login';
+    const seg = segments as string[];
+    const onLogin = seg[0] === 'login';
     // 공유 링크(웹)는 로그인 없이도 열려야 함
-    const onPublicShare = segments[0] === 'recipe' && segments[1] === 'share';
+    const onPublicShare = seg[0] === 'recipe' && seg[1] === 'share';
     if (!userId && !onLogin && !onPublicShare) router.replace('/login');
     else if (userId && onLogin) router.replace('/(tabs)');
   }, [userId, segments]);
