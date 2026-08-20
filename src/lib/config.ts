@@ -6,7 +6,7 @@
  * 공유 링크 베이스 URL.
  * 웹 공유 페이지가 생기면 실제 도메인(예: https://kkini.app)으로 교체.
  */
-export const SHARE_BASE_URL = 'https://kkini.app/r';
+export const SHARE_BASE_URL = 'https://kkini-orcin.vercel.app/recipe/share';
 
 /** OAuth 로그인 후 앱으로 돌아올 딥링크 스킴 (app.json의 scheme과 일치) */
 export const APP_SCHEME = 'kkini';

@@ -123,14 +123,12 @@ export async function getRecipe(id: string): Promise<RecipeDetail> {
   return normalizeDetail(data);
 }
 
-/** 공유 슬러그로 레시피 조회 (unlisted 포함 — DB의 security-definer 함수 사용) */
+/** 공유 슬러그로 레시피 "전체 상세" 조회 (로그인 없이도 — security-definer 함수가 RLS 우회) */
 export async function getRecipeBySlug(slug: string): Promise<RecipeDetail | null> {
-  const { data, error } = await supabase.rpc('get_recipe_by_slug', { p_slug: slug });
+  const { data, error } = await supabase.rpc('get_shared_recipe', { p_slug: slug });
   if (error) throw error;
-  const recipe = Array.isArray(data) ? data[0] : data;
-  if (!recipe) return null;
-  // 함수는 recipes 행만 반환하므로, 상세는 별도 조회
-  return getRecipe(recipe.id);
+  if (!data) return null;
+  return data as RecipeDetail;
 }
 
 // ---- 태그 처리: 이름으로 upsert 후 레시피에 연결 ----
