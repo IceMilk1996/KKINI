@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { repo } from '@/lib/repo';
@@ -53,14 +53,11 @@ export default function SharedRecipeScreen() {
   }
   if (state === 'notfound' || !recipe) {
     return (
-      <>
-        <Stack.Screen options={{ title: '공유 레시피' }} />
-        <View style={styles.center}>
-          <Text style={styles.emptyEmoji}>🔗</Text>
-          <Text style={styles.emptyTitle}>레시피를 찾을 수 없어요</Text>
-          <Text style={font.muted}>공유가 해제되었거나 잘못된 링크예요</Text>
-        </View>
-      </>
+      <View style={styles.center}>
+        <Text style={styles.emptyEmoji}>🔗</Text>
+        <Text style={styles.emptyTitle}>레시피를 찾을 수 없어요</Text>
+        <Text style={font.muted}>공유가 해제되었거나 잘못된 링크예요</Text>
+      </View>
     );
   }
 
@@ -68,8 +65,7 @@ export default function SharedRecipeScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: '', headerShadowVisible: false }} />
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: spacing.xl * 3 }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 140 }}>
         {recipe.cover_image_url ? (
           <Image source={{ uri: recipe.cover_image_url }} style={styles.hero} contentFit="cover" />
         ) : (
