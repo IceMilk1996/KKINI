@@ -43,7 +43,9 @@ export default function RecipeDetailScreen() {
         url = res.url;
         load(); // 공유 상태 갱신
       }
-      await Share.share({ message: `${recipe.title} 레시피\n${url}`, url: url ?? undefined });
+      // 메시지에 링크를 한 번만 담는다(url 필드를 함께 넘기면 카톡에서 링크가 중복 표시됨)
+      const caption = recipe.summary ? `${recipe.title} · ${recipe.summary}` : `${recipe.title} 레시피`;
+      await Share.share({ message: `🍳 ${caption}\n${url}` });
     } catch {
       // 사용자가 공유 취소
     }
