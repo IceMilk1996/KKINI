@@ -47,3 +47,7 @@ example
 
 # 임시 보관 폴더
 _to_delete/
+
+# Claude Code (로컬 작업 규칙 — 저장소에 올리지 않음)
+CLAUDE.md
+.claude/
