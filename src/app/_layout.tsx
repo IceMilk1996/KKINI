@@ -4,7 +4,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { Jua_400Regular } from '@expo-google-fonts/jua';
 import { colors, fonts } from '@/theme';
-import { HeaderBackButton } from '@/components/HeaderBackButton';
 import { repo } from '@/lib/repo';
 import { USE_MOCK } from '@/lib/config';
 
@@ -33,7 +32,9 @@ function useAuthGate() {
   useEffect(() => {
     if (userId === undefined) return; // 아직 확인 중
     const onLogin = segments[0] === 'login';
-    if (!userId && !onLogin) router.replace('/login');
+    // 공유 링크(웹)는 로그인 없이도 열려야 함
+    const onPublicShare = segments[0] === 'recipe' && segments[1] === 'share';
+    if (!userId && !onLogin && !onPublicShare) router.replace('/login');
     else if (userId && onLogin) router.replace('/(tabs)');
   }, [userId, segments]);
 
@@ -64,8 +65,6 @@ export default function RootLayout() {
         headerStyle: { backgroundColor: colors.bg },
         headerTintColor: colors.text,
         headerTitleStyle: { fontFamily: fonts.display, fontSize: 18 },
-        headerTitleAlign: 'center', // Android 기본은 left, iOS는 center → 통일
-        headerLeft: () => <HeaderBackButton />,
         contentStyle: { backgroundColor: colors.bg },
       }}
     >

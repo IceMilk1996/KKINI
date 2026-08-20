@@ -4,12 +4,14 @@ import {
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { repo } from '@/lib/repo';
 import type { IngredientInput, Category, RecipeDetail, RecipeInput } from '@/types/database';
 import { colors, spacing, radius, fonts } from '@/theme';
 
 type StepForm = { instruction: string; timerMin: string };
 type LinkForm = { url: string; title: string };
+type Cover = { uri: string; base64?: string | null; contentType?: string | null };
 
 type Props = {
   initial?: RecipeDetail | null;   // 있으면 수정 모드
@@ -30,6 +32,11 @@ export default function RecipeForm({ initial, submitLabel, onSubmit, resetAfterS
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState<string | null>(initial?.category_id ?? null);
+
+  // 대표 사진 (수정 모드면 기존 URL로 미리 채움)
+  const [cover, setCover] = useState<Cover | null>(
+    initial?.cover_image_url ? { uri: initial.cover_image_url } : null
+  );
 
   const [ingredients, setIngredients] = useState<IngredientInput[]>(
     initial?.ingredients?.length
@@ -71,8 +78,34 @@ export default function RecipeForm({ initial, submitLabel, onSubmit, resetAfterS
     setTagInput('');
   }
 
+  async function pickCover() {
+    // 네이티브 모듈이 빌드에 포함됐는지 먼저 확인 (없으면 require가 던지므로 미리 차단)
+    const { requireOptionalNativeModule } = require('expo-modules-core');
+    if (!requireOptionalNativeModule('ExponentImagePicker')) {
+      Alert.alert('사진 기능 준비 중', '앱을 한 번 다시 빌드하면 사진 추가를 쓸 수 있어요.');
+      return;
+    }
+    const ImagePicker: typeof import('expo-image-picker') = require('expo-image-picker');
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('사진 접근 권한이 필요해요', '설정에서 사진 접근을 허용해주세요.');
+      return;
+    }
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.7,
+      base64: true,
+    });
+    if (!res.canceled && res.assets?.[0]) {
+      const a = res.assets[0];
+      setCover({ uri: a.uri, base64: a.base64, contentType: a.mimeType ?? 'image/jpeg' });
+    }
+  }
+
   function resetForm() {
-    setTitle(''); setSummary(''); setCookTime(''); setServings(''); setCategoryId(null);
+    setTitle(''); setSummary(''); setCookTime(''); setServings(''); setCategoryId(null); setCover(null);
     setIngredients([emptyIng()]);
     setSteps([emptyStep()]);
     setLinks([emptyLink()]); setTags([]); setShowLinks(false); setShowTags(false);
@@ -82,9 +115,15 @@ export default function RecipeForm({ initial, submitLabel, onSubmit, resetAfterS
     if (!title.trim()) return Alert.alert('제목을 입력해주세요.');
     setSaving(true);
     try {
+      // 대표 사진 처리: 새로 고른 사진(base64 있음)이면 업로드, 기존 URL이면 그대로
+      let coverUrl: string | null = null;
+      if (cover) {
+        coverUrl = cover.base64 ? await repo.uploadImage(cover) : cover.uri;
+      }
       await onSubmit({
         title: title.trim(),
         summary: summary.trim() || null,
+        cover_image_url: coverUrl,
         category_id: categoryId,
         cook_time_minutes: cookTime ? parseInt(cookTime, 10) : null,
         servings: servings ? parseInt(servings, 10) : null,
@@ -107,6 +146,25 @@ export default function RecipeForm({ initial, submitLabel, onSubmit, resetAfterS
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.lg, paddingBottom: 60 }}>
+
+        {/* 대표 사진 */}
+        {cover ? (
+          <View style={styles.coverWrap}>
+            <Image source={{ uri: cover.uri }} style={styles.coverImg} contentFit="cover" />
+            <Pressable style={styles.coverEdit} onPress={pickCover}>
+              <Ionicons name="camera" size={16} color={colors.white} />
+              <Text style={styles.coverEditText}>변경</Text>
+            </Pressable>
+            <Pressable style={styles.coverRemove} onPress={() => setCover(null)}>
+              <Ionicons name="close" size={16} color={colors.white} />
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable style={styles.coverAdd} onPress={pickCover}>
+            <Ionicons name="camera-outline" size={26} color={colors.primary} />
+            <Text style={styles.coverAddText}>대표 사진 추가</Text>
+          </Pressable>
+        )}
 
         {/* 기본 정보 */}
         <View style={styles.card}>
@@ -244,6 +302,26 @@ export default function RecipeForm({ initial, submitLabel, onSubmit, resetAfterS
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  // 대표 사진
+  coverAdd: {
+    height: 150, borderRadius: radius.md, backgroundColor: colors.primarySoft,
+    alignItems: 'center', justifyContent: 'center', gap: 6,
+    borderWidth: 1.5, borderColor: colors.primarySoft, borderStyle: 'dashed',
+  },
+  coverAddText: { fontFamily: fonts.bodyMedium, fontSize: 14, color: colors.primary },
+  coverWrap: { height: 200, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surface },
+  coverImg: { width: '100%', height: '100%' },
+  coverEdit: {
+    position: 'absolute', right: spacing.sm, bottom: spacing.sm,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill,
+  },
+  coverEditText: { fontFamily: fonts.bodyMedium, fontSize: 12, color: colors.white },
+  coverRemove: {
+    position: 'absolute', right: spacing.sm, top: spacing.sm,
+    width: 28, height: 28, borderRadius: radius.pill,
+    backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center',
+  },
   // 카드 (테두리 없는 흰 그룹)
   card: {
     backgroundColor: colors.card, borderRadius: radius.md,

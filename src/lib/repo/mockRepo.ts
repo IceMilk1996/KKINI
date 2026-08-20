@@ -4,6 +4,7 @@
 import type { Recipe, RecipeDetail, RecipeInput } from '../../types/database';
 import type { Repo } from './types';
 import { DEMO_USER_ID, mockCategories, seedRecipes } from '../mock/mockData';
+import { SHARE_BASE_URL } from '../config';
 
 let recipes: RecipeDetail[] = seedRecipes();
 const favorites = new Set<string>();
@@ -35,6 +36,12 @@ export const mockRepo: Repo = {
       const q = search.toLowerCase();
       list = list.filter((r) => r.title.toLowerCase().includes(q));
     }
+    const sorted = [...list].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    return wait(sorted.map(toRecipe));
+  },
+
+  async listFavoriteRecipes() {
+    const list = recipes.filter((r) => favorites.has(r.id));
     const sorted = [...list].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
     return wait(sorted.map(toRecipe));
   },
@@ -130,6 +137,32 @@ export const mockRepo: Repo = {
     return wait(undefined);
   },
 
+  async shareRecipe(id: string) {
+    const r = recipes.find((x) => x.id === id);
+    if (!r) throw new Error('레시피를 찾을 수 없습니다.');
+    const slug = r.share_slug ?? `demo${Math.random().toString(36).slice(2, 8)}`;
+    r.share_slug = slug;
+    if (r.visibility === 'private') r.visibility = 'unlisted';
+    return wait({ slug, url: `${SHARE_BASE_URL}/${slug}` });
+  },
+
+  async unshareRecipe(id: string) {
+    const r = recipes.find((x) => x.id === id);
+    if (r) r.visibility = 'private';
+    return wait(undefined);
+  },
+
+  async getRecipeBySlug(slug: string) {
+    const r = recipes.find((x) => x.share_slug === slug && x.visibility !== 'private');
+    return wait(r ?? null);
+  },
+
+  async listSharedRecipes() {
+    const list = recipes.filter((r) => r.user_id === DEMO_USER_ID && r.visibility !== 'private');
+    const sorted = [...list].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    return wait(sorted.map(toRecipe));
+  },
+
   async isFavorited(id: string) {
     return wait(favorites.has(id));
   },
@@ -137,6 +170,15 @@ export const mockRepo: Repo = {
     if (favorites.has(id)) favorites.delete(id);
     else favorites.add(id);
     return wait(favorites.has(id));
+  },
+
+  async uploadImage(input) {
+    // 데모 모드: 업로드 없이 로컬 uri를 그대로 사용
+    return wait(input.uri);
+  },
+
+  async getProfile() {
+    return wait({ email: 'demo@kkini.app', username: 'demo', displayName: '데모 사용자' });
   },
 
   async listCategories() {

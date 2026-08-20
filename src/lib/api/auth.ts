@@ -62,6 +62,25 @@ export async function signOut() {
   if (error) throw error;
 }
 
+/** 마이 화면용 간단 프로필 (이메일 + 닉네임) */
+export async function getMe(): Promise<{ email: string | null; username: string | null; displayName: string | null }> {
+  const { data } = await supabase.auth.getUser();
+  const user = data.user;
+  if (!user) return { email: null, username: null, displayName: null };
+  let username: string | null = null;
+  let displayName: string | null = null;
+  try {
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('username, display_name')
+      .eq('id', user.id)
+      .single();
+    username = prof?.username ?? null;
+    displayName = prof?.display_name ?? null;
+  } catch {}
+  return { email: user.email ?? null, username, displayName };
+}
+
 /** 내 프로필 조회 */
 export async function getMyProfile(): Promise<Profile | null> {
   const { data: userData } = await supabase.auth.getUser();

@@ -67,6 +67,20 @@ export async function listMyRecipes(opts: RecipeListOptions = {}): Promise<Recip
   return (data ?? []) as Recipe[];
 }
 
+/** 내가 공유한 레시피 (private 아님) */
+export async function listSharedRecipes(): Promise<Recipe[]> {
+  const uid = await getCurrentUserId();
+  if (!uid) throw new Error('로그인이 필요합니다.');
+  const { data, error } = await supabase
+    .from('recipes')
+    .select('*')
+    .eq('user_id', uid)
+    .neq('visibility', 'private')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Recipe[];
+}
+
 /** 공개 레시피 탐색 (커뮤니티 피드용) */
 export async function listPublicRecipes(opts: RecipeListOptions = {}): Promise<Recipe[]> {
   let query = supabase
