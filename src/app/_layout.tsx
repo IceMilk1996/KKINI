@@ -32,11 +32,11 @@ function useAuthGate() {
   useEffect(() => {
     if (userId === undefined) return; // 아직 확인 중
     const seg = segments as string[];
-    const onLogin = seg[0] === 'login';
+    const onAuthPage = seg[0] === 'login' || seg[0] === 'signup';
     // 공유 링크(웹)는 로그인 없이도 열려야 함
     const onPublicShare = seg[0] === 'recipe' && seg[1] === 'share';
-    if (!userId && !onLogin && !onPublicShare) router.replace('/login');
-    else if (userId && onLogin) router.replace('/(tabs)');
+    if (!userId && !onAuthPage && !onPublicShare) router.replace('/login');
+    else if (userId && onAuthPage) router.replace('/(tabs)');
   }, [userId, segments]);
 
   return userId;
@@ -73,6 +73,7 @@ export default function RootLayout() {
       <Stack.Screen name="recipe/[id]" options={{ title: '레시피' }} />
       <Stack.Screen name="recipe/share/[slug]" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="signup" options={{ headerShown: false }} />
     </Stack>
   );
 }
