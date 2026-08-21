@@ -17,30 +17,44 @@ export type OAuthProvider = 'google' | 'apple' | 'kakao';
 export async function signInWithOAuth(provider: OAuthProvider) {
   const redirectTo = makeRedirectUri({ scheme: 'kkini', path: 'auth-callback' });
 
+  // 카카오는 이메일(account_email)이 사업자 검수 대상이라 요청하면 KOE205.
+  // 닉네임만 요청한다. (구글은 기본 scope로 이메일 제공)
+  const scopes = provider === 'kakao' ? 'profile_nickname' : undefined;
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo, skipBrowserRedirect: true },
+    options: { redirectTo, skipBrowserRedirect: true, scopes },
   });
   if (error) throw error;
   if (!data?.url) throw new Error('로그인 URL을 받지 못했습니다.');
 
   // 앱 내 브라우저로 인증 진행
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  if (result.type !== 'success' || !result.url) return null;
+  if (result.type !== 'success' || !result.url) return null; // 사용자가 취소
 
-  // 콜백 URL에서 토큰 추출 → 세션 설정
   const url = new URL(result.url);
-  const params = new URLSearchParams(url.hash.substring(1)); // #access_token=...
+
+  // PKCE 흐름: 콜백에 ?code=... → 세션 교환
+  const code = url.searchParams.get('code');
+  if (code) {
+    const { error: exErr } = await supabase.auth.exchangeCodeForSession(code);
+    if (exErr) throw exErr;
+    return true;
+  }
+
+  // (구식) implicit 흐름 대비: #access_token=...
+  const params = new URLSearchParams(url.hash.replace(/^#/, ''));
   const access_token = params.get('access_token');
   const refresh_token = params.get('refresh_token');
-  if (!access_token || !refresh_token) throw new Error('토큰을 찾지 못했습니다.');
+  if (access_token && refresh_token) {
+    const { error: sessErr } = await supabase.auth.setSession({ access_token, refresh_token });
+    if (sessErr) throw sessErr;
+    return true;
+  }
 
-  const { data: sessionData, error: sessErr } = await supabase.auth.setSession({
-    access_token,
-    refresh_token,
-  });
-  if (sessErr) throw sessErr;
-  return sessionData;
+  // 콜백에 에러가 담겨온 경우
+  const errDesc = url.searchParams.get('error_description') || url.searchParams.get('error');
+  throw new Error(errDesc || '로그인 세션을 만들지 못했습니다.');
 }
 
 /** 이메일 + 비밀번호 로그인 */
