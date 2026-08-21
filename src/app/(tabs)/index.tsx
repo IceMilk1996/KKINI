@@ -102,8 +102,8 @@ export default function HomeScreen() {
           !refreshing ? (
             <View style={styles.empty}>
               <View style={styles.emptyCircle}><Text style={styles.emptyEmoji}>🍳</Text></View>
-              <Text style={styles.emptyTitle}>아직 레시피가 없어요</Text>
-              <Text style={font.muted}>아래 + 버튼으로 첫 끼니를 기록해보세요</Text>
+              <Text style={styles.emptyTitle}>{activeCat ? '이 카테고리엔 레시피가 없어요' : '아직 레시피가 없어요'}</Text>
+              <Text style={font.muted}>아래 '작성' 탭에서 첫 끼니를 기록해보세요</Text>
             </View>
           ) : null
         }
@@ -111,10 +111,6 @@ export default function HomeScreen() {
           <RecipeCard recipe={item} onPress={() => router.push(`/recipe/${item.id}`)} />
         )}
       />
-
-      <Pressable style={styles.fab} onPress={() => router.push('/create')}>
-        <Ionicons name="add" size={30} color={colors.white} />
-      </Pressable>
     </View>
   );
 }
@@ -157,9 +153,4 @@ const styles = StyleSheet.create({
   },
   emptyEmoji: { fontFamily: fonts.body, fontSize: 40 },
   emptyTitle: { fontSize: 18, fontFamily: fonts.display, color: colors.text },
-  fab: {
-    position: 'absolute', right: spacing.lg, bottom: spacing.xl,
-    width: 60, height: 60, borderRadius: radius.pill, backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center', ...shadow.fab,
-  },
 });
