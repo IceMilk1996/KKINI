@@ -20,15 +20,22 @@ function useAuthGate() {
 
   useEffect(() => {
     let unsub: (() => void) | undefined;
-    repo.getUserId().then(setUserId).catch(() => setUserId(null));
+    repo
+      .getUserId()
+      .then(setUserId)
+      .catch(() => setUserId(null));
     // 실모드에서는 로그인 상태 변화를 구독 (로그인/로그아웃 시 자동 이동)
     if (!USE_MOCK) {
       try {
         const authApi = require('@/lib/api/auth');
-        unsub = authApi.onAuthStateChange((uid: string | null) => setUserId(uid));
+        unsub = authApi.onAuthStateChange((uid: string | null) =>
+          setUserId(uid),
+        );
       } catch {}
     }
-    return () => { if (unsub) unsub(); };
+    return () => {
+      if (unsub) unsub();
+    };
   }, []);
 
   useEffect(() => {
@@ -87,7 +94,10 @@ export default function RootLayout() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="recipe/[id]" options={{ title: '레시피' }} />
-      <Stack.Screen name="recipe/share/[slug]" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="recipe/share/[slug]"
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
     </Stack>

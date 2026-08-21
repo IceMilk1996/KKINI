@@ -9,8 +9,11 @@ const KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 function esc(s) {
   return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/\n/g, ' ');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/\n/g, ' ');
 }
 
 export default async function handler(req, res) {
@@ -21,7 +24,11 @@ export default async function handler(req, res) {
     if (SUPA && KEY && slug) {
       const r = await fetch(`${SUPA}/rest/v1/rpc/get_shared_recipe`, {
         method: 'POST',
-        headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+        headers: {
+          apikey: KEY,
+          Authorization: `Bearer ${KEY}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ p_slug: slug }),
       });
       if (r.ok) {
@@ -37,13 +44,14 @@ export default async function handler(req, res) {
   try {
     html = await fetch(`${base}/index.html`).then((r) => r.text());
   } catch (_) {
-    html = '<!DOCTYPE html><html><head></head><body><div id="root"></div></body></html>';
+    html =
+      '<!DOCTYPE html><html><head></head><body><div id="root"></div></body></html>';
   }
 
   const title = recipe ? `${recipe.title} · 끼니` : '끼니 — 레시피 공유';
   const desc = recipe
-    ? (recipe.summary || `${recipe.title} 레시피를 확인해보세요`)
-    : '매일의 끼니를 기록하다';
+    ? recipe.summary || `${recipe.title} 레시피를 확인해보세요`
+    : '나만의 끼니를 기록하다';
   const img = recipe && recipe.cover_image_url ? recipe.cover_image_url : '';
   const url = `${base}/recipe/share/${encodeURIComponent(slug)}`;
 
@@ -62,8 +70,13 @@ export default async function handler(req, res) {
       `\n<meta name="twitter:image" content="${esc(img)}">`;
   }
 
-  html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${esc(title)}</title>`);
-  html = html.includes('</head>') ? html.replace('</head>', `${og}\n</head>`) : html + og;
+  html = html.replace(
+    /<title>[\s\S]*?<\/title>/i,
+    `<title>${esc(title)}</title>`,
+  );
+  html = html.includes('</head>')
+    ? html.replace('</head>', `${og}\n</head>`)
+    : html + og;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
