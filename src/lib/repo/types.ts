@@ -6,6 +6,7 @@ export interface Repo {
   getUserId(): Promise<string | null>;
   signInDemo(): Promise<void>;
   signOut(): Promise<void>;
+  deleteAccount(): Promise<void>;
 
   // 레시피
   listMyRecipes(search?: string): Promise<Recipe[]>;

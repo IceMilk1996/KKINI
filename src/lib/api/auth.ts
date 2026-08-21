@@ -76,6 +76,13 @@ export async function signOut() {
   if (error) throw error;
 }
 
+/** 회원 탈퇴 — 본인 계정과 데이터 삭제 후 로그아웃 */
+export async function deleteMyAccount() {
+  const { error } = await supabase.rpc('delete_my_account');
+  if (error) throw error;
+  try { await supabase.auth.signOut(); } catch {}
+}
+
 /** 마이 화면용 간단 프로필 (이메일 + 닉네임) */
 export async function getMe(): Promise<{ email: string | null; username: string | null; displayName: string | null }> {
   const { data } = await supabase.auth.getUser();

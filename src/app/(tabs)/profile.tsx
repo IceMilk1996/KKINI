@@ -42,6 +42,28 @@ export default function ProfileScreen() {
     ]);
   }
 
+  function onDeleteAccount() {
+    Alert.alert(
+      '회원 탈퇴',
+      '정말 탈퇴하시겠어요?\n작성한 모든 레시피와 데이터가 영구적으로 삭제되며 되돌릴 수 없어요.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '탈퇴하기',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await repo.deleteAccount();
+              router.replace('/login');
+            } catch (e: any) {
+              Alert.alert('탈퇴 실패', e?.message ?? '다시 시도해주세요.');
+            }
+          },
+        },
+      ],
+    );
+  }
+
   const name = me?.displayName || me?.username || (me?.email ? me.email.split('@')[0] : '내 프로필');
 
   return (
@@ -74,6 +96,10 @@ export default function ProfileScreen() {
       <Pressable style={styles.signOut} onPress={onSignOut}>
         <Ionicons name="log-out-outline" size={18} color={colors.danger} />
         <Text style={{ fontFamily: fonts.bodyMedium, color: colors.danger }}>로그아웃</Text>
+      </Pressable>
+
+      <Pressable style={styles.deleteAccount} onPress={onDeleteAccount}>
+        <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
       </Pressable>
     </View>
   );
@@ -113,4 +139,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: colors.border,
   },
   signOut: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: spacing.xl, padding: spacing.md },
+  deleteAccount: { alignItems: 'center', paddingVertical: spacing.sm },
+  deleteAccountText: { fontFamily: fonts.body, fontSize: 13, color: colors.textMuted, textDecorationLine: 'underline' },
 });

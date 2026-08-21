@@ -29,6 +29,11 @@ export const mockRepo: Repo = {
   async signOut() {
     signedIn = false;
   },
+  async deleteAccount() {
+    // 데모: 실제 삭제 없이 로그아웃 처리
+    signedIn = false;
+    return wait(undefined);
+  },
 
   async listMyRecipes(search?: string) {
     let list = recipes.filter((r) => r.user_id === DEMO_USER_ID);

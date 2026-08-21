@@ -16,6 +16,7 @@ export const realRepo: Repo = {
     throw new Error('데모 로그인은 데모 모드에서만 가능합니다.');
   },
   signOut: () => authApi.signOut(),
+  deleteAccount: () => authApi.deleteMyAccount(),
 
   listMyRecipes: (search?: string) => recipesApi.listMyRecipes({ search }),
   listFavoriteRecipes: () => recipesApi.listFavoriteRecipes(),
