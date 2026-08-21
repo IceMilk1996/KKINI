@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert, Linking } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { repo } from '@/lib/repo';
@@ -91,6 +91,7 @@ export default function ProfileScreen() {
       <View style={styles.menu}>
         <Row icon="bookmark-outline" label="보관함" onPress={() => router.push('/bookmarks')} />
         <Row icon="share-social-outline" label="공유한 레시피" onPress={() => router.push('/shared')} />
+        <Row icon="shield-checkmark-outline" label="개인정보 처리방침" onPress={() => Linking.openURL('https://kkini-orcin.vercel.app/privacy.html')} />
       </View>
 
       <Pressable style={styles.signOut} onPress={onSignOut}>
