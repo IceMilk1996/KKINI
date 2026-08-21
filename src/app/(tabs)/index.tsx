@@ -1,12 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, TextInput, FlatList, Pressable, RefreshControl, StyleSheet,
+  View, Text, TextInput, FlatList, Pressable, ScrollView, RefreshControl, StyleSheet,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { repo } from '@/lib/repo';
-import type { Recipe } from '@/types/database';
+import type { Recipe, Category } from '@/types/database';
 import RecipeCard from '@/components/RecipeCard';
 import { colors, spacing, radius, font, shadow, fonts } from '@/theme';
 import { USE_MOCK } from '@/lib/config';
@@ -15,6 +15,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCat, setSelectedCat] = useState<string | null>(null); // null = 전체
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -29,12 +31,27 @@ export default function HomeScreen() {
     }
   }, [search]);
 
+  useEffect(() => {
+    repo.listCategories().then(setCategories).catch(() => {});
+  }, []);
+
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // 레시피가 실제로 들어있는 카테고리만 칩으로 노출
+  const counts = new Map<string, number>();
+  recipes.forEach((r) => {
+    if (r.category_id) counts.set(r.category_id, (counts.get(r.category_id) ?? 0) + 1);
+  });
+  const presentCats = categories.filter((c) => counts.has(c.id));
+
+  // 선택된 카테고리가 목록에서 사라지면 전체로 되돌림
+  const activeCat = selectedCat && presentCats.some((c) => c.id === selectedCat) ? selectedCat : null;
+  const shown = activeCat ? recipes.filter((r) => r.category_id === activeCat) : recipes;
 
   return (
     <View style={styles.container}>
       <FlatList
-        data={recipes}
+        data={shown}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} tintColor={colors.primary} />}
@@ -61,8 +78,23 @@ export default function HomeScreen() {
               />
             </View>
 
-            {recipes.length > 0 && (
-              <Text style={styles.sectionLabel}>내 레시피 {recipes.length}</Text>
+            {presentCats.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.catRow}
+              >
+                <Chip label="전체" on={!activeCat} onPress={() => setSelectedCat(null)} />
+                {presentCats.map((c) => (
+                  <Chip key={c.id} label={c.name} on={activeCat === c.id} onPress={() => setSelectedCat(c.id)} />
+                ))}
+              </ScrollView>
+            )}
+
+            {shown.length > 0 && (
+              <Text style={styles.sectionLabel}>
+                {activeCat ? presentCats.find((c) => c.id === activeCat)?.name : '내 레시피'} {shown.length}
+              </Text>
             )}
           </View>
         }
@@ -87,6 +119,14 @@ export default function HomeScreen() {
   );
 }
 
+function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.chip, on && styles.chipOn]}>
+      <Text style={[styles.chipText, on && styles.chipTextOn]}>{label}</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
@@ -104,6 +144,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border, ...shadow.card,
   },
   searchInput: { fontFamily: fonts.body, flex: 1, color: colors.text, padding: 0, fontSize: 15 },
+  catRow: { gap: spacing.sm, paddingTop: spacing.lg, paddingRight: spacing.lg },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: colors.surface },
+  chipOn: { backgroundColor: colors.primary },
+  chipText: { fontFamily: fonts.bodyMedium, fontSize: 13, color: colors.text },
+  chipTextOn: { color: colors.white },
   sectionLabel: { marginTop: spacing.xl, marginBottom: spacing.xs, fontSize: 16, fontFamily: fonts.display, color: colors.text },
   empty: { alignItems: 'center', marginTop: 60, gap: spacing.sm, paddingHorizontal: spacing.xl },
   emptyCircle: {
