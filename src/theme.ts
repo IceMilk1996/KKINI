@@ -5,9 +5,9 @@ export const colors = {
   bg: '#FFFBF6',        // 따뜻한 크림
   surface: '#F7EFE6',   // 부드러운 베이지
   card: '#FFFFFF',
-  primary: '#EC855A',   // 따뜻한 테라코타 오렌지
-  primaryDark: '#D26A42',
-  primarySoft: '#FCEBDF', // 주황 틴트 (썸네일·칩 배경)
+  primary: '#BE5F3C',   // 로고색 (깊은 테라코타)
+  primaryDark: '#9E4B2E',
+  primarySoft: '#F6E6DB', // 테라코타 틴트 (썸네일·칩 배경)
   text: '#3B322B',      // 따뜻한 다크 브라운
   textMuted: '#9B8E82',
   border: '#F0E7DB',    // 아주 연한 경계
@@ -28,7 +28,7 @@ export const shadow = {
     elevation: 3,
   },
   fab: {
-    shadowColor: '#D26A42',
+    shadowColor: '#9E4B2E',
     shadowOpacity: 0.35,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
