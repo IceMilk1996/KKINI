@@ -51,3 +51,6 @@ _to_delete/
 # Claude Code (로컬 작업 규칙 — 저장소에 올리지 않음)
 CLAUDE.md
 .claude/
+
+# Supabase SQL (SQL Editor에 직접 실행 — 저장소에 올리지 않음)
+supabase/*.sql
