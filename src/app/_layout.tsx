@@ -1,11 +1,13 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
-import * as SplashScreen from 'expo-splash-screen';
-import { useFonts } from 'expo-font';
-import { Jua_400Regular } from '@expo-google-fonts/jua';
-import { colors, fonts } from '@/theme';
-import { repo } from '@/lib/repo';
 import { USE_MOCK } from '@/lib/config';
+import { repo } from '@/lib/repo';
+import { colors, fonts } from '@/theme';
+import { Jua_400Regular } from '@expo-google-fonts/jua';
+import { Ionicons } from '@expo/vector-icons';
+import { useFonts } from 'expo-font';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
+import { Pressable } from 'react-native';
 
 // 폰트가 준비될 때까지 스플래시를 유지 (로딩 중 폰트 바뀌는 깜빡임 방지)
 SplashScreen.preventAutoHideAsync();
@@ -52,6 +54,7 @@ export default function RootLayout() {
   });
 
   useAuthGate();
+  const router = useRouter();
 
   useEffect(() => {
     if (fontsLoaded) SplashScreen.hideAsync();
@@ -66,7 +69,20 @@ export default function RootLayout() {
         headerStyle: { backgroundColor: colors.bg },
         headerTintColor: colors.text,
         headerTitleStyle: { fontFamily: fonts.display, fontSize: 18 },
+        headerTitleAlign: 'center', // iOS·안드로이드 제목 위치 통일(가운데)
+        headerShadowVisible: false, // 헤더 밑줄/그림자 제거(평평하게 통일)
         contentStyle: { backgroundColor: colors.bg },
+        // 뒤로가기 버튼도 두 OS 동일하게 (Ionicons 꺾쇠). 뒤로 갈 곳이 있을 때만 표시.
+        headerLeft: ({ canGoBack }) =>
+          canGoBack ? (
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={12}
+              style={{ paddingRight: 4 }}
+            >
+              <Ionicons name="chevron-back" size={26} color={colors.text} />
+            </Pressable>
+          ) : null,
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
